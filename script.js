@@ -4,8 +4,12 @@ class WatermarkTool {
         this.watermarkText = document.getElementById('watermarkText');
         this.tilePattern = document.getElementById('tilePattern');
         this.addWatermarkBtn = document.getElementById('addWatermark');
+        this.downloadAllBtn = document.getElementById('downloadAll');
         this.originalImagesContainer = document.querySelector('#originalImages .images');
         this.watermarkedImagesContainer = document.querySelector('#watermarkedImages .images');
+        this.watermarkedImages = [];
+        this.previewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        this.previewImage = document.getElementById('previewImage');
 
         this.init();
     }
@@ -13,24 +17,55 @@ class WatermarkTool {
     init() {
         this.imageInput.addEventListener('change', () => this.handleImageUpload());
         this.addWatermarkBtn.addEventListener('click', () => this.processImages());
+        this.downloadAllBtn.addEventListener('click', () => this.downloadAllImages());
+        this.setupImagePreview();
+    }
+
+    setupImagePreview() {
+        this.originalImagesContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG') {
+                this.showPreview(e.target.src);
+            }
+        });
+
+        this.watermarkedImagesContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG') {
+                this.showPreview(e.target.src);
+            }
+        });
+    }
+
+    showPreview(src) {
+        this.previewImage.src = src;
+        this.previewModal.show();
     }
 
     handleImageUpload() {
         this.originalImagesContainer.innerHTML = '';
         const files = this.imageInput.files;
         
+        const loadPromises = [];
+        
         for (const file of files) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                const wrapper = document.createElement('div');
-                wrapper.className = 'image-wrapper';
-                wrapper.appendChild(img);
-                this.originalImagesContainer.appendChild(wrapper);
-            };
-            reader.readAsDataURL(file);
+            const promise = new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.onload = () => resolve(img);
+                    img.src = e.target.result;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'image-wrapper';
+                    wrapper.appendChild(img);
+                    this.originalImagesContainer.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+            loadPromises.push(promise);
         }
+        
+        Promise.all(loadPromises).then(loadedImages => {
+            this.loadedImages = loadedImages;
+        });
     }
 
     async processImages() {
@@ -40,11 +75,17 @@ class WatermarkTool {
             return;
         }
 
+        if (!this.loadedImages || this.loadedImages.length === 0) {
+            alert('请先选择图片');
+            return;
+        }
+
         this.watermarkedImagesContainer.innerHTML = '';
-        const images = this.originalImagesContainer.querySelectorAll('img');
+        this.watermarkedImages = [];
         
-        for (const img of images) {
+        for (const img of this.loadedImages) {
             const watermarkedImage = await this.addWatermark(img, watermarkText);
+            this.watermarkedImages.push(watermarkedImage);
             const wrapper = document.createElement('div');
             wrapper.className = 'image-wrapper';
             
@@ -53,13 +94,14 @@ class WatermarkTool {
             
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'download-btn';
-            downloadBtn.textContent = '下载';
+            downloadBtn.innerHTML = '<i class="bi bi-download"></i>下载';
             downloadBtn.onclick = () => this.downloadImage(watermarkedImage);
             
             wrapper.appendChild(resultImg);
             wrapper.appendChild(downloadBtn);
             this.watermarkedImagesContainer.appendChild(wrapper);
         }
+        this.downloadAllBtn.style.display = this.watermarkedImages.length > 0 ? 'block' : 'none';
     }
 
     async addWatermark(img, text) {
@@ -102,6 +144,28 @@ class WatermarkTool {
         link.href = dataUrl;
         link.download = `watermarked_${Date.now()}.jpg`;
         link.click();
+    }
+
+    async downloadAllImages() {
+        if (this.watermarkedImages.length === 0) {
+            alert('没有可下载的图片');
+            return;
+        }
+
+        const JSZip = window.JSZip;
+        const zip = new JSZip();
+
+        this.watermarkedImages.forEach((dataUrl, index) => {
+            const imageData = dataUrl.split(',')[1];
+            zip.file(`watermarked_${index + 1}.jpg`, imageData, {base64: true});
+        });
+
+        const zipContent = await zip.generateAsync({type: 'blob'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipContent);
+        link.download = `watermarked_images_${Date.now()}.zip`;
+        link.click();
+        URL.revokeObjectURL(link.href);
     }
 }
 
