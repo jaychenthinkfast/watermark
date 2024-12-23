@@ -113,21 +113,25 @@ class WatermarkTool {
         
         ctx.drawImage(img, 0, 0);
         
-        ctx.font = `${canvas.width * 0.05}px Arial`;
+        const fontSize = Math.min(canvas.width, canvas.height) * 0.05;
+        ctx.font = `${fontSize}px Arial`;
         ctx.fillStyle = 'rgba(128, 128, 128, 0.3)';
         
         const textMetrics = ctx.measureText(text);
         const textWidth = textMetrics.width;
-        const textHeight = canvas.width * 0.05;
+        const textHeight = fontSize;
         
         const tileCount = parseInt(this.tilePattern.value);
         const spacingX = canvas.width / tileCount;
         const spacingY = canvas.height / tileCount;
         
+        const marginX = spacingX * 0.1;
+        const marginY = spacingY * 0.1;
+        
         for (let i = 0; i < tileCount; i++) {
             for (let j = 0; j < tileCount; j++) {
-                const x = spacingX * i + (spacingX - textWidth) / 2;
-                const y = spacingY * j + (spacingY + textHeight) / 2;
+                const x = spacingX * i + marginX + (spacingX - textWidth - marginX * 2) / 2;
+                const y = spacingY * j + marginY + (spacingY - marginY * 2) / 2 + textHeight / 2;
                 ctx.save();
                 ctx.translate(x, y);
                 ctx.rotate(-Math.PI / 6);
@@ -152,14 +156,17 @@ class WatermarkTool {
             return;
         }
 
+        // 创建一个 ZIP 文件
         const JSZip = window.JSZip;
         const zip = new JSZip();
 
+        // 添加所有图片到 ZIP
         this.watermarkedImages.forEach((dataUrl, index) => {
             const imageData = dataUrl.split(',')[1];
             zip.file(`watermarked_${index + 1}.jpg`, imageData, {base64: true});
         });
 
+        // 生成并下载 ZIP 文件
         const zipContent = await zip.generateAsync({type: 'blob'});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(zipContent);
@@ -169,4 +176,5 @@ class WatermarkTool {
     }
 }
 
+// 初始化工具
 new WatermarkTool(); 
