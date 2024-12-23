@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片批量水印工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>图片批量水印工具</h1>
+        
+        <div class="controls">
+            <input type="file" id="imageInput" multiple accept="image/*">
+            <input type="text" id="watermarkText" placeholder="请输入水印文字">
+            <select id="tilePattern">
+                <option value="2">2 x 2 平铺</option>
+                <option value="3">3 x 3 平铺</option>
+            </select>
+            <button id="addWatermark">添加水印</button>
+        </div>
+
+        <div class="preview-container">
+            <div id="originalImages" class="image-container">
+                <h3>原始图片</h3>
+                <div class="images"></div>
+            </div>
+            <div id="watermarkedImages" class="image-container">
+                <h3>水印图片</h3>
+                <div class="images"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

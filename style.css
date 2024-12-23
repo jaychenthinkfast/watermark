@@ -1,0 +1,52 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.controls {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+}
+
+.preview-container {
+    display: flex;
+    gap: 20px;
+}
+
+.image-container {
+    flex: 1;
+}
+
+.images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.image-wrapper {
+    position: relative;
+    max-width: 300px;
+}
+
+.image-wrapper img {
+    max-width: 100%;
+    height: auto;
+}
+
+.download-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.download-btn:hover {
+    background: #45a049;
+} 
